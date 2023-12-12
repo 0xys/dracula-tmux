@@ -285,12 +285,12 @@ main()
 
   # Window option
   if $show_powerline; then
-    tmux set-window-option -g window-status-current-format '#[fg=${gray},bg=${dark_purple}]${left_sep}#[fg=${white},bg=${dark_purple}] #I[#W] #(tmux display-message -p " #{b:pane_current_path} " | sed "s#$USER#~#g") #[fg=${dark_purple},bg=${gray}]${left_sep}'
+    tmux set-window-option -g window-status-current-format '#[fg=${gray},bg=${dark_purple}]${left_sep}#[fg=${white},bg=${dark_purple}] #I[#W]  #[fg=${dark_purple},bg=${gray}]${left_sep}'
   else
-    tmux set-window-option -g window-status-current-format '#[fg=${white},bg=${dark_purple}] #I[#W] #(tmux display-message -p " #{b:pane_current_path} " | sed "s#$USER#~#g") '
+    tmux set-window-option -g window-status-current-format '#[fg=${white},bg=${dark_purple}] #I[#W] '
   fi
 
-  tmux set-window-option -g window-status-format '#[fg=${white}]#[bg=${gray}] #I[#W] #(tmux display-message -p " #{b:pane_current_path} " | sed "s#$USER#~#g")'
+  tmux set-window-option -g window-status-format '#[fg=${white}]#[bg=${gray}] #I[#W] '
   tmux set-window-option -g window-status-activity-style "bold"
   tmux set-window-option -g window-status-bell-style "bold"
 }
