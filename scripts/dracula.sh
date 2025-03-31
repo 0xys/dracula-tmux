@@ -5,10 +5,12 @@ export LC_ALL=en_US.UTF-8
 current_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $current_dir/utils.sh
 
-main()
-{
+main() {
   # set configuration option variables
+  show_krbtgt_label=$(get_tmux_option "@dracula-krbtgt-context-label" "")
+  krbtgt_principal=$(get_tmux_option "@dracula-krbtgt-principal" "")
   show_kubernetes_context_label=$(get_tmux_option "@dracula-kubernetes-context-label" "")
+  show_only_kubernetes_context=$(get_tmux_option "@dracula-show-only-kubernetes-context" false)
   eks_hide_arn=$(get_tmux_option "@dracula-kubernetes-eks-hide-arn" false)
   eks_extract_account=$(get_tmux_option "@dracula-kubernetes-eks-extract-account" false)
   hide_kubernetes_user=$(get_tmux_option "@dracula-kubernetes-hide-user" false)
@@ -17,6 +19,7 @@ main()
   show_location=$(get_tmux_option "@dracula-show-location" true)
   fixed_location=$(get_tmux_option "@dracula-fixed-location")
   show_powerline=$(get_tmux_option "@dracula-show-powerline" false)
+  transparent_powerline_bg=$(get_tmux_option "@dracula-transparent-powerline-bg" false)
   show_flags=$(get_tmux_option "@dracula-show-flags" false)
   show_left_icon=$(get_tmux_option "@dracula-show-left-icon" smiley)
   show_left_icon_padding=$(get_tmux_option "@dracula-left-icon-padding" 1)
@@ -25,27 +28,61 @@ main()
   show_timezone=$(get_tmux_option "@dracula-show-timezone" true)
   show_left_sep=$(get_tmux_option "@dracula-show-left-sep" )
   show_right_sep=$(get_tmux_option "@dracula-show-right-sep" )
+  show_edge_icons=$(get_tmux_option "@dracula-show-edge-icons" false)
+  show_inverse_divider=$(get_tmux_option "@dracula-inverse-divider" )
   show_border_contrast=$(get_tmux_option "@dracula-border-contrast" false)
   show_day_month=$(get_tmux_option "@dracula-day-month" false)
   show_refresh=$(get_tmux_option "@dracula-refresh-rate" 5)
   show_synchronize_panes_label=$(get_tmux_option "@dracula-synchronize-panes-label" "Sync")
   time_format=$(get_tmux_option "@dracula-time-format" "")
   show_ssh_session_port=$(get_tmux_option "@dracula-show-ssh-session-port" false)
+  show_libreview=$(get_tmux_option "@dracula-show-libreview" false)
   IFS=' ' read -r -a plugins <<< $(get_tmux_option "@dracula-plugins" "battery network weather")
   show_empty_plugins=$(get_tmux_option "@dracula-show-empty-plugins" true)
 
   # Dracula Color Pallette
-  white='#f8f8f2'
-  gray='#44475a'
-  dark_gray='#282a36'
-  light_purple='#bd93f9'
-  dark_purple='#6272a4'
-  cyan='#8be9fd'
-  green='#50fa7b'
-  orange='#ffb86c'
-  red='#ff5555'
-  pink='#ff79c6'
-  yellow='#f1fa8c'
+  white="#f8f8f2"
+  gray="#44475a"
+  dark_gray="#282a36"
+  light_purple="#bd93f9"
+  dark_purple="#6272a4"
+  cyan="#8be9fd"
+  green="#50fa7b"
+  orange="#ffb86c"
+  red="#ff5555"
+  pink="#ff79c6"
+  yellow="#f1fa8c"
+
+  # Override default colors and possibly add more
+  colors="$(get_tmux_option "@dracula-colors" "")"
+  if [ -n "$colors" ]; then
+    eval "$colors"
+  fi
+
+  # Set transparency variables - Colors and window dividers
+  if $transparent_powerline_bg; then
+	bg_color="default"
+	if $show_edge_icons; then
+	  window_sep_fg=${dark_purple}
+	  window_sep_bg=default
+	  window_sep="$show_right_sep"
+	else
+	  window_sep_fg=${dark_purple}
+	  window_sep_bg=default
+	  window_sep="$show_inverse_divider"
+	fi
+  else
+    bg_color=${gray}
+    if $show_edge_icons; then
+      window_sep_fg=${dark_purple}
+      window_sep_bg=${gray}
+      window_sep="$show_inverse_divider"
+    else
+      window_sep_fg=${gray}
+      window_sep_bg=${dark_purple}
+      window_sep="$show_left_sep"
+    fi
+  fi
 
   # Handle left icon configuration
   case $show_left_icon in
@@ -121,12 +158,16 @@ main()
   tmux set-option -g message-style "bg=${gray},fg=${white}"
 
   # status bar
-  tmux set-option -g status-style "bg=${gray},fg=${white}"
+  tmux set-option -g status-style "bg=${bg_color},fg=${white}"
 
   # Status left
   if $show_powerline; then
-    tmux set-option -g status-left "#[bg=${green},fg=${dark_gray}]#{?client_prefix,#[bg=${yellow}],} ${left_icon} #[fg=${green},bg=${gray}]#{?client_prefix,#[fg=${yellow}],}${left_sep}"
-    powerbg=${gray}
+    if $show_edge_icons; then
+      tmux set-option -g status-left "#[bg=${bg_color},fg=${green},bold]#{?client_prefix,#[fg=${yellow}],}${show_right_sep}#[bg=${green},fg=${dark_gray}]#{?client_prefix,#[bg=${yellow}],} ${left_icon} #[fg=${green},bg=${bg_color}]#{?client_prefix,#[fg=${yellow}],}${left_sep} "
+    else
+      tmux set-option -g status-left "#[bg=${dark_gray},fg=${green}]#[bg=${green},fg=${dark_gray}]#{?client_prefix,#[bg=${yellow}],} ${left_icon} #[fg=${green},bg=${bg_color}]#{?client_prefix,#[fg=${yellow}],}${left_sep}"
+    fi
+    powerbg=${bg_color}
   else
     tmux set-option -g status-left "#[bg=${green},fg=${dark_gray}]#{?client_prefix,#[bg=${yellow}],} ${left_icon}"
   fi
@@ -224,9 +265,17 @@ main()
       IFS=' ' read -r -a colors <<<$(get_tmux_option "@dracula-spotify-tui-colors" "green dark_gray")
       script="#($current_dir/spotify-tui.sh)"
 
+    elif [ $plugin = "krbtgt" ]; then
+      IFS=' ' read -r -a colors <<<$(get_tmux_option "@dracula-krbtgt-colors" "cyan dark_gray")
+      script="#($current_dir/krbtgt.sh $krbtgt_principal $show_krbtgt_label)"
+
+    elif [ $plugin = "playerctl" ]; then
+      IFS=' ' read -r -a colors <<<$(get_tmux_option "@dracula-playerctl-colors" "green dark_gray")
+      script="#($current_dir/playerctl.sh)"
+
     elif [ $plugin = "kubernetes-context" ]; then
       IFS=' ' read -r -a colors <<<$(get_tmux_option "@dracula-kubernetes-context-colors" "cyan dark_gray")
-      script="#($current_dir/kubernetes_context.sh $eks_hide_arn $eks_extract_account $hide_kubernetes_user $show_kubernetes_context_label)"
+      script="#($current_dir/kubernetes_context.sh $eks_hide_arn $eks_extract_account $hide_kubernetes_user $show_only_kubernetes_context $show_kubernetes_context_label)"
 
     elif [ $plugin = "terraform" ]; then
       IFS=' ' read -r -a colors <<<$(get_tmux_option "@dracula-terraform-colors" "light_purple dark_gray")
@@ -238,7 +287,7 @@ main()
 
     elif [ $plugin = "weather" ]; then
       IFS=' ' read -r -a colors <<< $(get_tmux_option "@dracula-weather-colors" "orange dark_gray")
-      script="#($current_dir/weather_wrapper.sh $show_fahrenheit $show_location $fixed_location)"
+      script="#($current_dir/weather_wrapper.sh $show_fahrenheit $show_location '$fixed_location')"
 
     elif [ $plugin = "time" ]; then
       IFS=' ' read -r -a colors <<< $(get_tmux_option "@dracula-time-colors" "dark_purple white")
@@ -248,7 +297,7 @@ main()
         if $show_day_month && $show_military ; then # military time and dd/mm
           script="%a %d/%m %R ${timezone} "
         elif $show_military; then # only military time
-          script="%a %m/%d %R ${timezone} "
+          script="%R ${timezone} "
         elif $show_day_month; then # only dd/mm
           script="%a %d/%m %I:%M %p ${timezone} "
         else
@@ -259,20 +308,41 @@ main()
       IFS=' ' read -r -a colors <<< $(get_tmux_option "@dracula-synchronize-panes-colors" "cyan dark_gray")
       script="#($current_dir/synchronize_panes.sh $show_synchronize_panes_label)"
 
+    elif [ $plugin = "libreview" ]; then
+      IFS=' ' read -r -a colors <<< $(get_tmux_option "@dracula-libre-colors" "white dark_gray")
+      script="#($current_dir/libre.sh $show_libreview)"
+
     elif [ $plugin = "ssh-session" ]; then
       IFS=' ' read -r -a colors <<< $(get_tmux_option "@dracula-ssh-session-colors" "green dark_gray")
       script="#($current_dir/ssh_session.sh $show_ssh_session_port)"
+
+    elif [ $plugin = "network-public-ip" ]; then
+      IFS=' ' read -r -a colors <<<$(get_tmux_option "@dracula-network-public-ip-colors" "cyan dark_gray")
+      script="#($current_dir/network-public-ip.sh)"
 
     else
       continue
     fi
 
+    if [ $plugin = "sys-temp" ]; then
+      IFS=' ' read -r -a colors <<< $(get_tmux_option "@dracula-sys-temp-colors" "green dark_gray")
+      script="#($current_dir/sys_temp.sh)"
+    fi
+
+    # edge styling
+    if $show_edge_icons; then
+      right_edge_icon="#[bg=${bg_color},fg=${!colors[0]}]${show_left_sep}"
+      background_color=${bg_color}
+    else
+      background_color=${powerbg}
+    fi
+
     if $show_powerline; then
       if $show_empty_plugins; then
-        tmux set-option -ga status-right "#[fg=${!colors[0]},bg=${powerbg},nobold,nounderscore,noitalics]${right_sep}#[fg=${!colors[1]},bg=${!colors[0]}] $script "
+        tmux set-option -ga status-right " #[fg=${!colors[0]},bg=${background_color},nobold,nounderscore,noitalics]${right_sep}#[fg=${!colors[1]},bg=${!colors[0]}] $script $right_edge_icon"
       else
-        tmux set-option -ga status-right "#{?#{==:$script,},,#[fg=${!colors[0]},nobold,nounderscore,noitalics]${right_sep}#[fg=${!colors[1]},bg=${!colors[0]}] $script }"
-      fi
+    tmux set-option -ga status-right "#{?#{==:$script,},,#[fg=${!colors[0]},nobold,nounderscore,noitalics] ${right_sep}#[fg=${!colors[1]},bg=${!colors[0]}] $script $right_edge_icon}"
+    fi
       powerbg=${!colors[0]}
     else
       if $show_empty_plugins; then
@@ -281,6 +351,7 @@ main()
         tmux set-option -ga status-right "#{?#{==:$script,},,#[fg=${!colors[1]},bg=${!colors[0]}] $script }"
       fi
     fi
+
   done
 
   # Window option
