@@ -44,3 +44,12 @@ normalize_percent_len() {
   printf "%${left_spaces}s%s%${right_spaces}s\n" "" $1 ""
 }
 
+
+# drop the "|...|" per-gpu separators when there is only one gpu: "|5%|" -> "5%"
+strip_single_gpu_separators() {
+  if [[ "$1" =~ ^\|[^|]*\|$ ]]; then
+    echo "${1:1:${#1}-2}"
+  else
+    echo "$1"
+  fi
+}

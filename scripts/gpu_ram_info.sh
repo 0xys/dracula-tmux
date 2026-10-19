@@ -70,7 +70,7 @@ main()
   # storing the refresh rate in the variable RATE, default is 5
   RATE=$(get_tmux_option "@dracula-refresh-rate" 5)
   gpu_label=$(get_tmux_option "@dracula-gpu-vram-label" "VRAM")
-  gpu_usage=$(get_gpu)
+  gpu_usage=$(strip_single_gpu_separators "$(get_gpu)")
   echo "$gpu_label $gpu_usage"
   sleep $RATE
 }
