@@ -246,6 +246,10 @@ main() {
       IFS=' ' read -r -a colors <<< $(get_tmux_option "@dracula-gpu-power-draw-colors" "green dark_gray")
       script="#($current_dir/gpu_power.sh)"
 
+    elif [ $plugin = "gpu-temp" ]; then
+      IFS=' ' read -r -a colors <<< $(get_tmux_option "@dracula-gpu-temp-colors" "red dark_gray")
+      script="#($current_dir/gpu_temp.sh)"
+
     elif [ $plugin = "cpu-usage" ]; then
       IFS=' ' read -r -a colors <<< $(get_tmux_option "@dracula-cpu-usage-colors" "orange dark_gray")
       script="#($current_dir/cpu_info.sh)"

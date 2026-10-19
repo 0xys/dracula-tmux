@@ -17,7 +17,7 @@
   - [cwd](#cwd---up)
   - [fossil](#fossil---up)
   - [git](#git---up)
-  - [GPU Info (gpu-usage, gpu-ram-usage, gpu-power-draw)](#gpu-info---up)
+  - [GPU Info (gpu-usage, gpu-ram-usage, gpu-power-draw, gpu-temp)](#gpu-info---up)
   - [hg](#hg---up)
   - [Kerberos TGT (krbtgt)](#Kerberos-TGT---up)
   - [kubernetes-context](#kubernetes-context---up)
@@ -419,8 +419,8 @@ set -g @dracula-git-truncate-length 10
 
 ### gpu-info - [up](#table-of-contents)
 
-These widgets display the current computational, ram, and power usage of installed graphics cards.
-They are split into widgets with the names: `gpu-usage, gpu-ram-usage, gpu-power-draw`.
+These widgets display the current computational, ram, and power usage, and the temperature of installed graphics cards.
+They are split into widgets with the names: `gpu-usage, gpu-ram-usage, gpu-power-draw, gpu-temp`.
 
 hardware support:
 
@@ -453,12 +453,17 @@ To display the power usage in percent (watt is default unit):
 set -g @dracula-gpu-power-percent true
 ```
 
+`gpu-temp` reads `nvidia-smi` on NVIDIA and falls back to the hwmon sensor in
+`/sys/class/drm` (amd, intel, nouveau) when `nvidia-smi` is missing or fails.
+It shows `N/A` when no sensor is available, including on MacOS.
+
 Possible nerdfont settings for gpu info labels:
 
 ```bash
 set -g @dracula-gpu-power-label "󰢮 "
 set -g @dracula-gpu-usage-label "󰢮 "
 set -g @dracula-gpu-vram-label "󰢮 "
+set -g @dracula-gpu-temp-label "󰢮 "
 ```
 
 nerdfont icons to consider:
